@@ -5,18 +5,26 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run copy:js && npm run copy:css && vite build",
+    "copy:js": "node -e \"require('fs').copyFileSync('node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 'public/bootstrap.bundle.min.js')\"",
+    "copy:css": "node -e \"require('fs').copyFileSync('node_modules/bootstrap/dist/css/bootstrap.min.css','public/bootstrap.min.css')\"",
     "preview": "vite preview",
+    "format": "prettier --write \"**/*.{js,ts,svelte,md}\"",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.23",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
     "@tsconfig/svelte": "^5.0.2",
+    "@types/chrome": "^0.0.260",
+    "bootstrap": "^5.3.2",
+    "prettier": "^3.2.5",
+    "prettier-plugin-svelte": "^3.1.2",
     "svelte": "^4.2.10",
     "svelte-check": "^3.6.3",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
-    "vite": "^5.1.0"
+    "vite": "^5.1.0",
+    "vite-plugin-static-copy": "^1.0.1"
   }
 }

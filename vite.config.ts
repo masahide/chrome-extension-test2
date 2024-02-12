@@ -15,13 +15,30 @@ const manifest = defineManifest({
   options_ui: {
     page: "src/options/index.html",
   },
+  content_scripts: [
+    {
+      matches: ["http://*/*", "https://*/*"],
+      js: ["src/contentscript/index.ts"],
+      run_at: "document_start",
+    },
+  ],
   side_panel: {
     default_path: "src/sidepanel/index.html",
   },
   background: {
     service_worker: "src/background/index.ts",
   },
-  permissions: ["storage", "sidePanel"],
+  host_permissions: ["<all_urls>"],
+  permissions: [
+    "storage",
+    "sidePanel",
+    "contextMenus",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "unlimitedStorage",
+    "alarms",
+  ],
 });
 
 // https://vitejs.dev/config/

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type ExtractContent } from "../lib/utils";
+  import type { Article, Transcription } from "../lib/utils";
   let text = "";
 
   function getSelection() {
@@ -8,38 +8,32 @@
         let tabid = tabs[i].id;
         //console.log("tabID:", tabid);
         if (tabid) {
-          chrome.tabs.sendMessage(
-            tabid,
-            { name: "getSelection" },
-            (response: any) => {
-              if (response) {
-                let data: ExtractContent = response;
-                sendServiceRequest(data);
-              }
-            },
-          );
+          chrome.tabs.sendMessage(tabid, { name: "getSelection" });
         }
       }
     });
   }
-  function sendServiceRequest(context: ExtractContent) {
-    // selection text
-    if (context.selectText.length > 0) {
-      text = context.selectText;
-      return;
+  chrome.runtime.onMessage.addListener(async function (message, sender) {
+    switch (message.name) {
+      case "getSelection":
+        let data: string = message.data;
+        text = data;
+        return;
+      case "getTranscription":
+        const transcription: Transcription = message.data;
+        text = transcription.text;
+        return;
+      case "getFullText":
+        const article: Article = message.data;
+        if (article) {
+          text = article.textContent;
+        }
+        return;
+      default:
+        text = "unknown message:" + message;
+        console.log("unknown message:", message);
     }
-    // youtube
-    console.log("context:", context);
-    if (context.transcription) {
-      text = "youtube:" + context.transcription.text;
-      return;
-    }
-    // full text
-    if (context.data) {
-      text = "full text:" + context.data.content;
-      return;
-    }
-  }
+  });
 </script>
 
 <div class="d-flex gap-2"></div>

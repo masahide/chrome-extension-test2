@@ -1,5 +1,5 @@
 import { Readability } from "@mozilla/readability";
-import type { Article } from "../lib/utils";
+import type { Article, Transcription } from "../lib/utils";
 
 // @mozilla/readability を使用して本文を抽出する関数
 function extractContent(): Article {
@@ -28,46 +28,6 @@ function extractContent(): Article {
   }
   return article;
 }
-
-chrome.runtime.onMessage.addListener(async (request, options, sendResponse) => {
-  //console.log("request.name:", request.name);
-  let url = new URL(window.location.href);
-  if (request.name == "getSelection") {
-    let str = window.getSelection()?.toString();
-    // selection text
-    if (str && str.length > 0) {
-      sendResponse({
-        url: url,
-        selectText: str,
-        transcription: null,
-        data: null,
-      });
-      return;
-    }
-  }
-  // youtube
-  let vid = getVideoID(window.location.href);
-  console.log("vid:", vid);
-  if (vid) {
-    let res = await getTranscription();
-    sendResponse({
-      url: url,
-      selectText: "",
-      transcription: res,
-      data: null,
-    });
-    console.log("getTranscription ", res);
-    return;
-  }
-  // full text
-  sendResponse({
-    url: url,
-    transcription: null,
-    selectText: "",
-    data: extractContent(),
-  }); // snub them.
-});
-
 function getVideoID(url: string) {
   let t =
       /^(https?:)?(\/\/)?((www\.|m\.)?youtube(-nocookie)?\.com\/((watch)?\?(feature=\w*&)?vi?=|embed\/|vi?\/|e\/)|youtu.be\/)([\w-]{10,20})/i,
@@ -92,8 +52,43 @@ async function getTranscription() {
         null
           ? void 0
           : i[0];
-      return { text: await (await fetch(n.baseUrl)).text(), videoId: videoID };
-    } catch (data) {
-      return;
+      const res: Transcription = {
+        text: await (await fetch(n.baseUrl)).text(),
+        videoID: videoID,
+      };
+      return res;
+    } catch (error) {
+      console.log("getTranscription error:", error);
     }
 }
+
+chrome.runtime.onMessage.addListener(async (request, options) => {
+  //console.log("request.name:", request.name);
+  let url = new URL(window.location.href);
+  if (request.name == "getSelection") {
+    let str = window.getSelection()?.toString();
+    // selection text
+    if (str && str.length > 0) {
+      chrome.runtime.sendMessage({
+        name: "getSelection",
+        data: str,
+      });
+      return;
+    }
+  }
+  // youtube
+  if (getVideoID(window.location.href)) {
+    let res = await getTranscription();
+    chrome.runtime.sendMessage({
+      name: "getTranscription",
+      data: res,
+    });
+    console.log("getTranscription ", res);
+    return;
+  }
+  // full text
+  chrome.runtime.sendMessage({
+    name: "getFullText",
+    data: extractContent(),
+  });
+});

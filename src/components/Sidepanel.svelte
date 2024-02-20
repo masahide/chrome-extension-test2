@@ -1,59 +1,66 @@
 <script lang="ts">
-  import type { Article, Transcription } from "../lib/utils";
-  let text = "";
+  import type { ArticleSnapshot, OpenAIRequest } from "../lib/utils";
+  import { ArticleSnapshotType, fetcher, TextType } from "../lib/utils";
+  import TextWindow from "./TextWindow.svelte";
+  let snapshots: { [key: number]: ArticleSnapshot } = {};
 
-  function getSelection() {
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      for (let i = 0; i < tabs.length; i++) {
-        let tabid = tabs[i].id;
-        //console.log("tabID:", tabid);
-        if (tabid) {
-          chrome.tabs.sendMessage(tabid, { name: "getSelection" });
-        }
-      }
-    });
-  }
   chrome.runtime.onMessage.addListener(async function (message, sender) {
+    snapshots[message.windowID] = {
+      type: ArticleSnapshotType.Unknown,
+      textContent: "unknown message",
+      title: "",
+      url: "",
+      content: "",
+      id: "",
+    };
     switch (message.name) {
-      case "getSelection":
-        let data: string = message.data;
-        text = data;
-        return;
-      case "getTranscription":
-        const transcription: Transcription = message.data;
-        text = transcription.text;
-        return;
-      case "getFullText":
-        const article: Article = message.data;
-        if (article) {
-          text = article.textContent;
+      case TextType.Selection:
+        snapshots[message.windowID] = message.data;
+        break;
+      case TextType.Transcription:
+        const transcription: ArticleSnapshot = message.data;
+        snapshots[message.windowID] = transcription;
+        break;
+      case TextType.FullText:
+        if (message.data) {
+          snapshots[message.windowID] = message.data;
         }
-        return;
+        break;
       default:
-        text = "unknown message:" + message;
         console.log("unknown message:", message);
+        break;
     }
   });
+  let items: { id: number; name: string }[] = [];
+
+  function addItem() {
+    const newItem = {
+      id: items.length + 1,
+      name: `Item ${items.length + 1}`,
+    };
+    items = [...items, newItem]; // 配列に新しいアイテムを追加
+  }
 </script>
 
 <!-- チャットメッセージ表示エリア -->
 <div class="panel">
   <div class="header">
-    <a class="navbar-brand" href="#">AI要約</a>
+    <span class="navbar-brand">AI要約</span>
   </div>
   <div class="mainContent">
     <!-- チャットメッセージの例 -->
     <div class="chat-message bot-message bg-secondary-subtle">
-      こんにちは、何かお手伝いできることはありますか？
+      webページから文章を抽出して要約します
+      文章抽出ボタンを押すと、webページから文章を抽出します。
+      カーソルで文章を選択してボタンを押すと選択部分のみ抽出されます。
     </div>
-    <div class="chat-message user-message bg-secondary-subtle">hogehoge</div>
-    <div class="chat-message bot-message bg-secondary-subtle">
-      {#if text}
-        <span>{text}</span>
-      {:else}
-        none
-      {/if}
-    </div>
+    {#each items as item (item.id)}
+      <TextWindow windowID={item.id} snapshot={snapshots[item.id]} />
+    {/each}
+    <button type="button" class="btn btn-primary" on:click={addItem}
+      >新規要約追加</button
+    >
+    <div class="chat-message bot-message bg-secondary-subtle"></div>
   </div>
   <div class="footer">
     <!-- 固定チャット入力欄 -->

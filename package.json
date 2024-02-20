@@ -10,7 +10,8 @@
     "copy:css": "node -e \"require('fs').copyFileSync('node_modules/bootstrap/dist/css/bootstrap.min.css','public/bootstrap.min.css')\"",
     "preview": "vite preview",
     "format": "prettier --write \"**/*.{js,ts,svelte,md}\"",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "runts": "npx tsx ${npm_config_file}"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.23",
@@ -20,10 +21,12 @@
     "@types/chrome": "^0.0.260",
     "@types/mozilla__readability": "^0.4.2",
     "bootstrap": "^5.3.2",
+    "openai": "^4.28.0",
     "prettier": "^3.2.5",
     "prettier-plugin-svelte": "^3.1.2",
     "svelte": "^4.2.10",
     "svelte-check": "^3.6.3",
+    "ts-node": "^10.9.2",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
     "vite": "^5.1.0",

@@ -46,7 +46,7 @@ function extractContent(): ArticleSnapshot {
       url: window.location.href,
       type: ArticleSnapshotType.FullText,
       content: article.content,
-      //textContent: article.textContent,
+      textContent: article.textContent,
       id: "",
     };
   }
@@ -55,7 +55,7 @@ function extractContent(): ArticleSnapshot {
     url: window.location.href,
     type: ArticleSnapshotType.FullText,
     content: window.document.body.innerHTML,
-    //textContent: window.document.body.innerText,
+    textContent: window.document.body.innerText,
     id: "",
   };
 }
@@ -89,7 +89,7 @@ async function getTranscription() {
         title: data.videoDetails.title,
         type: ArticleSnapshotType.Youtube,
         content: await (await fetch(n.baseUrl)).text(),
-        //textContent: "",
+        textContent: "",
         id: videoID,
       };
       return res;

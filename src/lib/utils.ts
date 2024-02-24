@@ -3,7 +3,7 @@ export type ArticleSnapshot = {
   url: string;
   type: ArticleSnapshotType;
   content: string;
-  //textContent: string;
+  textContent: string;
   id: string;
 };
 

@@ -7,10 +7,10 @@
   chrome.runtime.onMessage.addListener(async function (message, sender) {
     snapshots[message.windowID] = {
       type: ArticleSnapshotType.Unknown,
+      content: "unknown message",
       textContent: "unknown message",
       title: "",
       url: "",
-      content: "",
       id: "",
     };
     switch (message.name) {

@@ -1,15 +1,15 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { crx, defineManifest } from "@crxjs/vite-plugin";
-//import { viteStaticCopy } from "vite-plugin-static-copy"; // ↓ この行を追加
 
 const manifest = defineManifest({
   manifest_version: 3,
-  name: "svelte chrome extension test",
-  description: "A test simple counter extension",
+  name: "ChatGPTalk Sideber",
+  description:
+    "Capture web text, summarize, paste with prompts. Simplifies YouTube transcriptions. THIS EXTENSION IS FOR BETA TESTING.",
   version: "1.0.0",
+  version_name: "1.0.0 beta",
   action: {
-    //default_popup: "src/popup/index.html",
     default_title: "Click to open panel",
   },
   options_ui: {
@@ -21,6 +21,12 @@ const manifest = defineManifest({
       js: ["src/contentscript/index.ts"],
       run_at: "document_start",
     },
+    {
+      matches: ["https://chat.openai.com/*"],
+      js: ["src/contentscript/chatgpt.ts"],
+      all_frames: true,
+      run_at: "document_idle",
+    },
   ],
   side_panel: {
     default_path: "src/sidepanel/index.html",
@@ -28,13 +34,15 @@ const manifest = defineManifest({
   background: {
     service_worker: "src/background/index.ts",
   },
+  offline_enabled: true,
   host_permissions: ["<all_urls>"],
   permissions: [
     "storage",
     "sidePanel",
-    "contextMenus",
     "activeTab",
     "tabs",
+    "declarativeNetRequestWithHostAccess",
+    "contextMenus",
     "scripting",
     "unlimitedStorage",
     "alarms",

@@ -113,7 +113,7 @@ chrome.runtime.onMessage.addListener(async (request, options) => {
           title: window.document.title,
           type: ArticleSnapshotType.Selection,
           content: str,
-          textContent: "",
+          textContent: str,
           id: "",
         },
       });
@@ -128,7 +128,7 @@ chrome.runtime.onMessage.addListener(async (request, options) => {
       windowID: request.windowID,
       data: res,
     });
-    console.log("getTranscription ", res);
+    //console.log("getTranscription ", res);
     return;
   }
   // full text

@@ -19,6 +19,79 @@ export enum TextType {
   Transcription = "Transcription",
   FullText = "FullText",
 }
+export type summarySourceText = {
+  title: string;
+  text: string;
+  url: string;
+};
+export function getSelection() {
+  chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+    for (let i = 0; i < tabs.length; i++) {
+      let tabid = tabs[i].id;
+      if (tabid) {
+        chrome.tabs.sendMessage(tabid, {
+          name: TextType.Selection,
+          windowID: tabid,
+        });
+      }
+    }
+  });
+}
+function secondsToHMS(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const sec = Math.floor(seconds % 60);
+  return [hours, minutes, sec]
+    .map((val) => val.toString().padStart(2, "0"))
+    .join(":");
+}
+function parseXmlToTranscript(xmlString: string): string {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+  const texts = xmlDoc.getElementsByTagName("text");
+
+  let transcriptString = "";
+  for (let i = 0; i < texts.length; i++) {
+    const textElement = texts[i];
+    const start = textElement.getAttribute("start");
+    const text = textElement.textContent;
+    if (start && text) {
+      const startSeconds = secondsToHMS(parseFloat(start));
+      transcriptString += `${startSeconds}: ${text}\n`; // 改行区切りで文字列を追加
+    }
+  }
+  return transcriptString.trim();
+}
+export function toSummarySource(snapshot: ArticleSnapshot): summarySourceText {
+  if (!snapshot) {
+    return { title: "", text: "", url: "" };
+  }
+  switch (snapshot.type) {
+    case ArticleSnapshotType.Youtube:
+      return {
+        title: snapshot.title,
+        text: parseXmlToTranscript(snapshot.content),
+        url: snapshot.url,
+      };
+    case ArticleSnapshotType.FullText:
+      return {
+        title: snapshot.title,
+        text: snapshot.textContent,
+        url: snapshot.url,
+      };
+    case ArticleSnapshotType.Selection:
+      return {
+        title: snapshot.title,
+        text: snapshot.textContent,
+        url: snapshot.url,
+      };
+  }
+  return {
+    title: snapshot.title,
+    text: "unknown type",
+    url: "",
+  };
+}
 
 const wrap = <T>(task: Promise<Response>): Promise<T> => {
   return new Promise((resolve, reject) => {

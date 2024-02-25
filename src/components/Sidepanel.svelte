@@ -1,79 +1,82 @@
 <script lang="ts">
   import type { ArticleSnapshot, OpenAIRequest } from "../lib/utils";
-  import { ArticleSnapshotType, fetcher, TextType } from "../lib/utils";
-  import TextWindow from "./TextWindow.svelte";
-  let snapshots: { [key: number]: ArticleSnapshot } = {};
+  import { getSelection, toSummarySource, TextType } from "../lib/utils";
+  import { onMount } from "svelte";
+
+  const URL = "https://chat.openai.com/";
+  let isIframeVisible = false;
 
   chrome.runtime.onMessage.addListener(async function (message, sender) {
-    snapshots[message.windowID] = {
-      type: ArticleSnapshotType.Unknown,
-      content: "unknown message",
-      textContent: "unknown message",
-      title: "",
-      url: "",
-      id: "",
-    };
-    switch (message.name) {
-      case TextType.Selection:
-        snapshots[message.windowID] = message.data;
-        break;
-      case TextType.Transcription:
-        const transcription: ArticleSnapshot = message.data;
-        snapshots[message.windowID] = transcription;
-        break;
-      case TextType.FullText:
-        if (message.data) {
-          snapshots[message.windowID] = message.data;
-        }
-        break;
-      default:
-        console.log("unknown message:", message);
-        break;
+    const snapshot = message.data as ArticleSnapshot;
+    const source = toSummarySource(snapshot);
+    const iframe = document.getElementById("preview") as HTMLIFrameElement;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage(source, URL);
     }
   });
-  let items: { id: number; name: string }[] = [];
 
-  function addItem() {
-    const newItem = {
-      id: items.length + 1,
-      name: `Item ${items.length + 1}`,
-    };
-    items = [...items, newItem]; // 配列に新しいアイテムを追加
-  }
+  const open = async (currenturl: string) => {
+    const iframe = document.getElementById("preview") as HTMLIFrameElement;
+    await chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [1],
+      addRules: [
+        {
+          id: 1,
+          priority: 1,
+          action: {
+            type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
+            responseHeaders: [
+              {
+                header: "x-frame-options",
+                operation: chrome.declarativeNetRequest.HeaderOperation.REMOVE,
+              }, //"remove
+              {
+                header: "content-security-policy",
+                operation: chrome.declarativeNetRequest.HeaderOperation.REMOVE,
+              },
+            ],
+          },
+          condition: {
+            urlFilter: "*",
+            resourceTypes: [
+              chrome.declarativeNetRequest.ResourceType.MAIN_FRAME,
+              chrome.declarativeNetRequest.ResourceType.SUB_FRAME,
+              chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
+              chrome.declarativeNetRequest.ResourceType.WEBSOCKET,
+            ],
+          },
+        },
+      ],
+    });
+    if (iframe) {
+      iframe.src = currenturl;
+    }
+    if (iframe) {
+      isIframeVisible = true;
+    }
+  };
+  onMount(() => {
+    open(URL);
+  });
 </script>
 
 <!-- チャットメッセージ表示エリア -->
 <div class="panel">
-  <div class="header">
-    <span class="navbar-brand">AI要約</span>
-  </div>
   <div class="mainContent">
-    <!-- チャットメッセージの例 -->
-    <div class="chat-message bot-message bg-secondary-subtle">
-      webページから文章を抽出して要約します
-      文章抽出ボタンを押すと、webページから文章を抽出します。
-      カーソルで文章を選択してボタンを押すと選択部分のみ抽出されます。
-    </div>
-    {#each items as item (item.id)}
-      <TextWindow windowID={item.id} snapshot={snapshots[item.id]} />
-    {/each}
-    <button type="button" class="btn btn-primary" on:click={addItem}
-      >新規要約追加</button
-    >
-    <div class="chat-message bot-message bg-secondary-subtle"></div>
+    <!-- svelte-ignore a11y-missing-attribute -->
+    <iframe
+      id="preview"
+      class="preview"
+      style:display={isIframeVisible ? "block" : "none"}
+      allow="camera; clipboard-write; fullscreen; microphone; geolocation"
+    ></iframe>
   </div>
   <div class="footer">
-    <!-- 固定チャット入力欄 -->
-    <input
-      type="text"
-      id="messageInput"
-      class="form-control"
-      placeholder="メッセージを入力..."
-      style="margin: 10px;"
-    />
-    <div>
-      <button class="" on:click={getSelection}>get</button>
-    </div>
+    <!-- チャットメッセージの例 -->
+    <div class="chat-message bot-message bg-secondary-subtle"></div>
+    <button type="button" class="btn btn-primary" on:click={getSelection}
+      >Capture</button
+    >
   </div>
 </div>
 
@@ -84,19 +87,24 @@
     height: 100vh;
     margin: 0;
   }
-  .header {
-    flex: 0 0 auto; /*固定の高さにする*/
-    padding: 20px;
-    text-align: center;
-  }
   .mainContent {
     flex: 1 1 auto; /*残りの領域全体を占有する*/
-    overflow-y: scroll;
-    padding: 20px;
+    /*padding: 20px;*/
+    position: relative;
+  }
+  iframe {
+    border: none;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    margin: 0px;
+  }
+  .preview {
+    border: 0;
   }
   .footer {
     flex: 0 0 auto; /*固定の高さにする*/
-    padding: 20px;
+    padding: 10px;
     text-align: center;
   }
 </style>

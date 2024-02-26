@@ -13,6 +13,16 @@ function replaceTemplateVariables(
   }, template);
 }
 
+// 文字列を修正する関数
+function cleanUpText(text: string): string {
+  // 行末のスペースを削除
+  text = text.replace(/[ \t]+$/gm, "");
+  // 連続するスペースを1つに置き換え
+  //text = text.replace(/[ ]+/g, " ");
+  // 連続する改行を1つの改行に置き換え
+  text = text.replace(/\n+/g, "\n");
+  return text;
+}
 chrome.storage.onChanged.addListener((changes, namespace) => {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
     switch (key) {
@@ -36,7 +46,7 @@ if (window !== window.top) {
     if (data.title && data.text) {
       const variables = {
         TITLE: data.title,
-        CONTENT: data.text,
+        CONTENT: cleanUpText(data.text),
         URL: data.url,
         SELECTED_LANGUAGE: lang,
       };
@@ -49,8 +59,13 @@ if (window !== window.top) {
         return;
       }
       textarea.value = filledPrompt;
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
+      const length = textarea.value.length;
+      textarea.selectionStart = length;
+      textarea.selectionEnd = length;
       textarea.focus();
-      textarea.setSelectionRange(filledPrompt.length, filledPrompt.length);
+      textarea.scrollTop = textarea.scrollHeight;
     } else {
       console.log("messsage response.data not found");
     }

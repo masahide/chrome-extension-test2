@@ -64,8 +64,16 @@ if (window !== window.top) {
       const length = textarea.value.length;
       textarea.selectionStart = length;
       textarea.selectionEnd = length;
-      textarea.focus();
-      textarea.scrollTop = textarea.scrollHeight;
+      textarea.dispatchEvent(
+        new Event("input", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      setTimeout(() => {
+        textarea.focus();
+        textarea.scrollTop = textarea.scrollHeight;
+      }, 1000);
     } else {
       console.log("messsage response.data not found");
     }

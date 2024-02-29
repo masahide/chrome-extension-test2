@@ -2,6 +2,7 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error(error));
 
+/*
 function setupContextMenu() {
   chrome.contextMenus.create({
     id: "summary-text",
@@ -13,6 +14,7 @@ function setupContextMenu() {
 chrome.runtime.onInstalled.addListener(() => {
   setupContextMenu();
 });
+*/
 
 /*
 chrome.contextMenus.onClicked.addListener((data) => {
@@ -21,7 +23,10 @@ chrome.contextMenus.onClicked.addListener((data) => {
     data: { value: data.selectionText },
   });
 });
+*/
 
+/*
+// https://stackoverflow.com/questions/10994324/chrome-extension-content-script-re-injection-after-upgrade-or-install
 chrome.runtime.onInstalled.addListener(async () => {
   let manifest = chrome.runtime.getManifest();
   if (manifest && manifest.content_scripts) {

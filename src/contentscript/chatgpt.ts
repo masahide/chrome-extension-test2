@@ -1,8 +1,24 @@
 import type { summarySourceText } from "../lib/utils";
 let promptTemplate =
   "Condense the provided text into concise bulletpoints, selecting a fitting emoji for each, and respond in {{SELECTED_LANGUAGE}} using the content: {{CONTENT}}";
+let lang = "";
 let prompt = promptTemplate;
-let lang = "japanese";
+chrome.storage.sync.get(["prompt", "lang"], (data) => {
+  if (data && data.prompt) {
+    prompt = data.prompt;
+  }
+  if (data && data.lang) {
+    lang = data.lang;
+  }
+});
+if (lang === "") {
+  const languageName = new Intl.DisplayNames(["en"], { type: "language" }).of(
+    chrome.i18n.getUILanguage(),
+  );
+  if (languageName) {
+    lang = languageName;
+  }
+}
 function replaceTemplateVariables(
   template: string,
   variables: { [key: string]: string },
@@ -30,7 +46,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         prompt = newValue as string;
         break;
       case "lang":
-        lang = newValue as string;
+        let l = newValue as string;
+        if (l === "") {
+          lang = l;
+        }
         break;
     }
     console.log(

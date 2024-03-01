@@ -8,9 +8,8 @@
   let message: string | null = null;
 
   onMount(() => {
-    const languageCode = chrome.i18n.getUILanguage();
-    const languageName = new Intl.DisplayNames(["ja"], { type: "language" }).of(
-      languageCode,
+    const languageName = new Intl.DisplayNames(["en"], { type: "language" }).of(
+      chrome.i18n.getUILanguage(),
     );
     if (languageName) {
       language = languageName;

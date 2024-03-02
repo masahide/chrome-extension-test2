@@ -10,15 +10,15 @@ chrome.storage.sync.get(["prompt", "lang"], (data) => {
   if (data && data.lang) {
     lang = data.lang;
   }
-});
-if (lang === "") {
-  const languageName = new Intl.DisplayNames(["en"], { type: "language" }).of(
-    chrome.i18n.getUILanguage(),
-  );
-  if (languageName) {
-    lang = languageName;
+  if (lang === "") {
+    const languageName = new Intl.DisplayNames(["en"], { type: "language" }).of(
+      chrome.i18n.getUILanguage(),
+    );
+    if (languageName) {
+      lang = languageName;
+    }
   }
-}
+});
 function replaceTemplateVariables(
   template: string,
   variables: { [key: string]: string },
@@ -46,16 +46,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         prompt = newValue as string;
         break;
       case "lang":
-        let l = newValue as string;
-        if (l === "") {
-          lang = l;
+        let v = newValue as string;
+        if (v !== "") {
+          lang = v;
         }
         break;
     }
-    console.log(
-      `Storage key "${key}" in namespace "${namespace}" changed.`,
-      `Old value was "${oldValue}", new value is "${newValue}".`,
-    );
   }
 });
 
@@ -93,8 +89,6 @@ if (window !== window.top) {
         textarea.focus();
         textarea.scrollTop = textarea.scrollHeight;
       }, 1000);
-    } else {
-      console.log("messsage response.data not found");
     }
   });
 }
